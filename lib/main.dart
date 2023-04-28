@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,6 +18,21 @@ class MyApp extends StatelessWidget {
       ),
       home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
+  }
+}
+
+class MyAppState extends ChangeNotifier {
+  bool buttonState = false;
+
+  void updateState({required bool updateValue}) {
+    buttonState = updateValue;
+    notifyListeners();
+  }
+
+  Future<void> updateUI() async {
+    updateState(updateValue: true);
+    await Future.delayed(const Duration(seconds: 5));
+    updateState(updateValue: false);
   }
 }
 
@@ -40,14 +56,17 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text("using setState() with common stateful widget",
-                style: Theme.of(context).textTheme.titleLarge,textAlign: TextAlign.center),
+            Text("using provider",
+                style: Theme.of(context).textTheme.titleLarge,
+                textAlign: TextAlign.center),
             const CommonStatefulButton(
-                title: "Button-1",
-                snackBarText: "Progress is busy for Button-1"),
+              title: "Button-1",
+              snackBarText: "Progress is busy for Button-1",
+            ),
             const CommonStatefulButton(
-                title: "Button-2",
-                snackBarText: "Progress is busy for Button-2"),
+              title: "Button-2",
+              snackBarText: "Progress is busy for Button-2",
+            ),
             const CommonStatefulButton(
                 title: "Button-3",
                 snackBarText: "Progress is busy for Button-3"),
@@ -68,50 +87,45 @@ class CommonStatefulButton extends StatefulWidget {
   final String title;
   final String snackBarText;
 
-  const CommonStatefulButton(
-      {Key? key, required this.title, required this.snackBarText})
-      : super(key: key);
+  const CommonStatefulButton({
+    Key? key,
+    required this.title,
+    required this.snackBarText,
+  }) : super(key: key);
 
   @override
   State<CommonStatefulButton> createState() => _CommonStatefulButtonState();
 }
 
 class _CommonStatefulButtonState extends State<CommonStatefulButton> {
-  bool buttonState = false;
-
-  void updateState({required bool updateValue}) {
-    setState(() {
-      buttonState = updateValue;
-    });
-  }
-
-  Future<void> updateUI() async {
-    updateState(updateValue: true);
-    await Future.delayed(const Duration(seconds: 5));
-    updateState(updateValue: false);
-  }
-
   @override
   Widget build(BuildContext context) {
-    Widget child;
-    if (buttonState) {
-      child =
-          const CircularProgressIndicator(strokeWidth: 3, color: Colors.white);
-    } else {
-      child = Text(widget.title);
-    }
-    return ElevatedButton(
-        onPressed: () {
-          if (!buttonState) {
-            updateUI();
-          } else {
-            showSnack(context: context, msg: widget.snackBarText);
-          }
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: child,
-        ));
+    return ChangeNotifierProvider<MyAppState>(
+      create: (context) => MyAppState(),
+      builder: (context, child) {
+        MyAppState appState = Provider.of<MyAppState>(context);
+
+        Widget buttonChild;
+        if (appState.buttonState) {
+          buttonChild = const CircularProgressIndicator(
+              strokeWidth: 3, color: Colors.white);
+        } else {
+          buttonChild = Text(widget.title);
+        }
+        return ElevatedButton(
+            onPressed: () {
+              if (!appState.buttonState) {
+                appState.updateUI();
+              } else {
+                showSnack(context: context, msg: widget.snackBarText);
+              }
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: buttonChild,
+            ));
+      },
+    );
   }
 
   void showSnack({required BuildContext context, required String msg}) {
