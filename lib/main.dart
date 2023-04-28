@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 
 void main() {
@@ -31,20 +30,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  List<bool> buttonState = [false, false, false, false, false];
-
-  void updateState({required int position, required bool updateValue}) {
-    setState(() {
-      buttonState[position] = updateValue;
-    });
-  }
-
-  Future<void> updateUI({required int position}) async {
-    updateState(position: position, updateValue: true);
-    await Future.delayed(const Duration(seconds: 5));
-    updateState(position: position, updateValue: false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,63 +40,23 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text("using setState()",
-                style: Theme.of(context).textTheme.titleLarge),
-            CommonButton(
+            Text("using setState() with common stateful widget",
+                style: Theme.of(context).textTheme.titleLarge,textAlign: TextAlign.center),
+            const CommonStatefulButton(
                 title: "Button-1",
-                onPressed: () {
-                  if (!buttonState[0]) {
-                    updateUI(position: 0);
-                  } else {
-                    showSnack(
-                        context: context, msg: "Progress is busy for Button-1");
-                  }
-                },
-                state: buttonState[0]),
-            CommonButton(
+                snackBarText: "Progress is busy for Button-1"),
+            const CommonStatefulButton(
                 title: "Button-2",
-                onPressed: () {
-                  if (!buttonState[1]) {
-                    updateUI(position: 1);
-                  } else {
-                    showSnack(
-                        context: context, msg: "Progress is busy for Button-2");
-                  }
-                },
-                state: buttonState[1]),
-            CommonButton(
+                snackBarText: "Progress is busy for Button-2"),
+            const CommonStatefulButton(
                 title: "Button-3",
-                onPressed: () {
-                  if (!buttonState[2]) {
-                    updateUI(position: 2);
-                  } else {
-                    showSnack(
-                        context: context, msg: "Progress is busy for Button-3");
-                  }
-                },
-                state: buttonState[2]),
-            CommonButton(
+                snackBarText: "Progress is busy for Button-3"),
+            const CommonStatefulButton(
                 title: "Button-4",
-                onPressed: () {
-                  if (!buttonState[3]) {
-                    updateUI(position: 3);
-                  } else {
-                    showSnack(
-                        context: context, msg: "Progress is busy for Button-4");
-                  }
-                },
-                state: buttonState[3]),
-            CommonButton(
+                snackBarText: "Progress is busy for Button-4"),
+            const CommonStatefulButton(
                 title: "Button-5",
-                onPressed: () {
-                  if (!buttonState[4]) {
-                    updateUI(position: 4);
-                  } else {
-                    showSnack(
-                        context: context, msg: "Progress is busy for Button-5");
-                  }
-                },
-                state: buttonState[4])
+                snackBarText: "Progress is busy for Button-5"),
           ],
         ),
       ),
@@ -119,39 +64,59 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 }
 
-class CommonButton extends StatelessWidget {
+class CommonStatefulButton extends StatefulWidget {
   final String title;
-  final Function onPressed;
-  final bool state;
+  final String snackBarText;
 
-  const CommonButton(
-      {Key? key,
-      required this.title,
-      required this.onPressed,
-      required this.state})
+  const CommonStatefulButton(
+      {Key? key, required this.title, required this.snackBarText})
       : super(key: key);
+
+  @override
+  State<CommonStatefulButton> createState() => _CommonStatefulButtonState();
+}
+
+class _CommonStatefulButtonState extends State<CommonStatefulButton> {
+  bool buttonState = false;
+
+  void updateState({required bool updateValue}) {
+    setState(() {
+      buttonState = updateValue;
+    });
+  }
+
+  Future<void> updateUI() async {
+    updateState(updateValue: true);
+    await Future.delayed(const Duration(seconds: 5));
+    updateState(updateValue: false);
+  }
 
   @override
   Widget build(BuildContext context) {
     Widget child;
-    if (state) {
+    if (buttonState) {
       child =
           const CircularProgressIndicator(strokeWidth: 3, color: Colors.white);
     } else {
-      child = Text(title);
+      child = Text(widget.title);
     }
     return ElevatedButton(
         onPressed: () {
-          onPressed.call();
+          if (!buttonState) {
+            updateUI();
+          } else {
+            showSnack(context: context, msg: widget.snackBarText);
+          }
         },
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: child,
         ));
   }
-}
 
-void showSnack({required BuildContext context, required String msg}) {
-  ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
+  void showSnack({required BuildContext context, required String msg}) {
+    ScaffoldMessenger.of(context).removeCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 2)));
+  }
 }
