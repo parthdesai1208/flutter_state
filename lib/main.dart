@@ -1,5 +1,8 @@
+import 'package:button_state/ButtonBloc.dart';
+import 'package:button_state/ButtonEvent.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'ButtonState.dart';
 
 void main() {
   runApp(const MyApp());
@@ -98,34 +101,43 @@ class CommonStatefulButton extends StatefulWidget {
 }
 
 class _CommonStatefulButtonState extends State<CommonStatefulButton> {
+  ButtonBloc buttonBloc = ButtonBloc();
+
+  @override
+  void dispose() {
+    super.dispose();
+    buttonBloc.close();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider<MyAppState>(
-      create: (context) => MyAppState(),
-      builder: (context, child) {
-        MyAppState appState = Provider.of<MyAppState>(context);
 
-        Widget buttonChild;
-        if (appState.buttonState) {
-          buttonChild = const CircularProgressIndicator(
-              strokeWidth: 3, color: Colors.white);
-        } else {
-          buttonChild = Text(widget.title);
-        }
-        return ElevatedButton(
-            onPressed: () {
-              if (!appState.buttonState) {
-                appState.updateUI();
-              } else {
-                showSnack(context: context, msg: widget.snackBarText);
-              }
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: buttonChild,
-            ));
-      },
-    );
+    return BlocProvider(
+        create: (context) => ButtonBloc(),
+        child: BlocBuilder<ButtonBloc, ButtonState>(builder: (context, state) {
+          buttonBloc = BlocProvider.of<ButtonBloc>(context);
+
+          var s = (state as ButtonUIState);
+          Widget buttonChild;
+          if (s.isShowingProgress) {
+            buttonChild = const CircularProgressIndicator(
+                strokeWidth: 3, color: Colors.white);
+          } else {
+            buttonChild = Text(widget.title);
+          }
+          return ElevatedButton(
+              onPressed: () {
+                if (!s.isShowingProgress) {
+                  context.read<ButtonBloc>().add(ButtonClickEvent());
+                } else {
+                  showSnack(context: context, msg: widget.snackBarText);
+                }
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: buttonChild,
+              ));
+        }));
   }
 
   void showSnack({required BuildContext context, required String msg}) {
