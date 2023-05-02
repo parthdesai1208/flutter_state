@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'ProxyProvider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -76,6 +77,14 @@ class _MyHomePageState extends State<MyHomePage> {
             const CommonStatefulButton(
                 title: "Button-5",
                 snackBarText: "Progress is busy for Button-5"),
+            ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const ProxyProviderExample()));
+                },
+                child: const Text("Go to proxy provider"))
           ],
         ),
       ),
